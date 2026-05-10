@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String     @id @default(cuid())
+  name       String?
+  email      String     @unique
+  password   String
+  role       Role       @default(USER)
+  createdAt  DateTime   @default(now())
+  documents  Document[]
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model Category {
+  id         String     @id @default(cuid())
+  name       String
+  slug       String     @unique
+  icon       String?
+  color      String?
+  documents  Document[]
+  createdAt  DateTime   @default(now())
+}
+
+model Document {
+  id             String    @id @default(cuid())
+  title          String
+  slug           String    @unique
+  description    String?
+  subject        String?
+  grade          Int?
+  fileUrl        String
+  fileSize       Int?
+  pageCount      Int?
+  thumbnailUrl   String?
+  downloadCount  Int       @default(0)
+  viewCount      Int       @default(0)
+  isPublished    Boolean   @default(false)
+  tags           String[]
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id])
+  uploadedById   String?
+  uploadedBy     User?     @relation(fields: [uploadedById], references: [id])
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([title, description, subject])
+  @@index([categoryId])
+  @@index([isPublished])
+  @@index([grade])
+}
+
+model AnalyticsDaily {
+  id             String   @id @default(cuid())
+  date           DateTime @unique @db.Date
+  views          Int      @default(0)
+  downloads      Int      @default(0)
+  createdAt      DateTime @default(now())
+}

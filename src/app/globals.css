@@ -1,27 +1,137 @@
+/*
+  Thứ tự layer cho Tailwind (và nếu sau này bật lại MUI enableCssLayer).
+  Preflight nằm trong @layer base — không được đặt sau utilities.
+*/
+@layer base, mui, components, utilities;
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "swiper/css";
+@import "swiper/css/navigation";
+@import "swiper/css/pagination";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-}
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+  }
+  :root {
+    --background: oklch(0.99 0.005 250);
+    --foreground: oklch(0.22 0.02 270);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.22 0.02 270);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.22 0.02 270);
+    /* Brand primary orange ~#F97316 */
+    --primary: oklch(0.705 0.19 48);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.96 0.02 250);
+    --secondary-foreground: oklch(0.22 0.02 270);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(0.91 0.01 250);
+    --input: oklch(0.91 0.01 250);
+    --ring: oklch(0.705 0.19 48);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.705 0.19 48);
+    --sidebar-primary-foreground: oklch(0.99 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+  }
+  .dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --destructive-foreground: oklch(0.985 0 0);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading), var(--font-sans), system-ui, sans-serif;
+  }
+}
+
+/* Carousel tài liệu: đảm bảo một hàng ngang (tránh slide 100% width xếp dọc khi CSS Swiper muộn) */
+.document-swiper .swiper-wrapper {
+  display: flex;
+  flex-direction: row;
+  box-sizing: content-box;
+}
+.document-swiper .swiper-vertical .swiper-wrapper {
+  flex-direction: column;
+}
+.document-swiper .swiper-slide {
+  flex-shrink: 0;
+  height: auto;
+}
+.document-swiper .swiper-pagination-bullet-active {
+  background: #f97316;
+}
+
+/* Tailwind Preflight: fieldset{padding:0} — notch viền OutlinedInput (backup specificity) */
+fieldset.MuiOutlinedInput-notchedOutline {
+  padding-left: 8px;
+  padding-right: 8px;
 }

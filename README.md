@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Học Liệu — Website tài liệu PDF
 
-## Getting Started
+Ứng dụng Next.js 14 (App Router) lưu trữ và chia sẻ tài liệu học tập: danh sách, tìm kiếm, xem flipbook (`react-pdf` + `react-pageflip`), tải PDF khi đã đăng nhập, khu vực quản trị (Uploadthing, Prisma, PostgreSQL). Giao diện người dùng dùng **Material UI (MUI) v9** với **Emotion** (`@mui/material-nextjs` cho App Router), typography **Be Vietnam Pro** / **Lexend**; **Tailwind** còn trong `globals.css` nhưng các trang chính đã chuyển sang component MUI.
 
-First, run the development server:
+## Yêu cầu
+
+- Node 18+
+- PostgreSQL
+- Tài khoản [Uploadthing](https://uploadthing.com) (biến `UPLOADTHING_TOKEN`)
+
+## Cài đặt
 
 ```bash
+cp .env.example .env
+# Điền DATABASE_URL, NEXTAUTH_SECRET, UPLOADTHING_TOKEN
+
+npm install
+npx prisma db push
+npm run db:seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Mở [http://localhost:3000](http://localhost:3000). Tài khoản seed quản trị:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Email: `admin@hoclieu.vn`
+- Mật khẩu: `Admin@123456`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Lệnh | Mô tả |
+|------|--------|
+| `npm run dev` | Chạy dev server |
+| `npm run build` / `npm start` | Production |
+| `npm run db:push` | Đồng bộ schema Prisma → DB |
+| `npm run db:seed` | Dữ liệu mẫu + admin |
+| `npm run db:normalize-subjects` | Chuẩn hóa trường `subject` cũ → đúng `SUBJECT_OPTIONS` (chạy khi đổi danh sách môn) |
 
-To learn more about Next.js, take a look at the following resources:
+## Cấu trúc chính
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app/(site)/` — Trang công khai (trang chủ, `/tai-lieu`, `/danh-muc`, `/tim-kiem`)
+- `src/app/(auth)/` — Đăng nhập / đăng ký
+- `src/app/admin/` — Dashboard, quản lý tài liệu & danh mục
+- `src/app/api/` — REST + NextAuth + Uploadthing
+- `prisma/schema.prisma` — User, Category, Document, AnalyticsDaily
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Lưu ý
 
-## Deploy on Vercel
+- Giới hạn upload PDF trên Uploadthing hiện cấu hình **32MB** (giới hạn kiểu của SDK).
+- Trang chủ và API dùng Prisma: cần `DATABASE_URL` hợp lệ khi chạy.
+- Worker PDF dùng CDN `unpkg` cùng phiên bản `pdfjs-dist` với `react-pdf`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Triển khai
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Frontend: Vercel (đặt biến môi trường giống `.env.example`).
+- Database: Railway / Supabase Postgres.
+- Đảm bảo `NEXTAUTH_URL` trùng domain production.
