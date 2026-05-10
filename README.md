@@ -62,6 +62,8 @@ Sao chép `.env.example` → `.env` và điền:
 | `NEXTAUTH_SECRET` | Chuỗi bí mật ký session (vd: `openssl rand -base64 32`) |
 | `UPLOADTHING_TOKEN` | Token từ dashboard UploadThing |
 
+**Local vs production:** Trên máy, `NEXTAUTH_URL` **phải** là đúng URL bạn mở trình duyệt (thường `http://localhost:3000`). Nếu để nguyên URL Vercel trong `.env` khi chạy local, đăng nhập có thể lệch cookie và các API admin báo *Không có quyền*. Nên dùng `.env.local` chỉ cho máy (gitignored) hoặc sửa tạm `NEXTAUTH_URL` khi dev.
+
 ### Lệnh
 
 ```bash
@@ -99,7 +101,7 @@ Mở [http://localhost:3000](http://localhost:3000).
 ### Checklist
 
 1. **PostgreSQL ngoài Vercel** — Vercel không cung cấp Postgres mặc định. Dùng **Supabase**, **Neon**, **Railway**, **PlanetScale** (Postgres-compatible), v.v.
-2. **`DATABASE_URL` trên serverless** — Nên dùng URL **pooling / transaction mode** (vd: Supabase *pooler*, Neon *pool connection string*) để tránh hết connection khi cold start / nhiều function.
+2. **`DATABASE_URL` trên serverless** — Dùng URL **transaction pooler**, không dùng **session pool** của Supabase (giới hạn ~15 client, lỗi `EMAXCONNSESSION`). Chuỗi Supabase: cổng **6543**, thêm `?pgbouncer=true`. Neon/Railway: dùng connection string “pooled” nếu có.
 3. **Biến trên Vercel** — Thêm giống `.env.example`: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `UPLOADTHING_TOKEN`.
 4. **`NEXTAUTH_URL`** — Đặt đúng URL production (vd: `https://ten-du-an.vercel.app` hoặc domain tùy chỉnh). Sai URL thường gây lỗi đăng nhập / callback.
 5. **Database schema** — Sau khi gán `DATABASE_URL`, chạy một lần trên máy (hoặc CI):  
@@ -115,6 +117,20 @@ Giữ `UPLOADTHING_TOKEN` trên Vercel; kiểm tra domain app được phép tro
 
 - Upload PDF cấu hình **tối đa ~32MB** (theo router UploadThing trong code).
 - Worker PDF (`pdfjs`) dùng CDN cấu hình trong `next.config` — khi deploy cần domain ảnh/PDF remote nằm trong `images.remotePatterns` nếu thêm nguồn mới.
+
+### Lỗi `EMAXCONNSESSION` / `max clients reached in session mode` (Supabase)
+
+Supabase đang dùng **Session pool** (giới hạn rất thấp). Trong dashboard **Database → Connection string**, chọn **Transaction pool** (thường port **6543**), dán vào `DATABASE_URL` và thêm query `pgbouncer=true`, ví dụ:
+
+`postgresql://...@....pooler.supabase.com:6543/postgres?pgbouncer=true`
+
+Sau đó restart dev server. Code đã dùng singleton `PrismaClient` để không mở thêm client thừa trong một process.
+
+### Đã đăng nhập admin nhưng API quản trị báo *Không có quyền*
+
+1. Kiểm tra `NEXTAUTH_URL` trên local (mục trên).  
+2. Đăng xuất rồi đăng nhập lại sau khi sửa `.env`.  
+3. Code đã đọc JWT theo **HTTP/HTTPS của request** (không chỉ theo biến môi trường) để tránh lệch tên cookie giữa localhost và production.
 
 ---
 

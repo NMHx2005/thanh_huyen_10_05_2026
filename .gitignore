@@ -25,9 +25,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# local env files
-.env*.local
-
+# Secrets — không commit. File đã từng add trước khi ignore thì chạy: git rm --cached .env
+.env*
+!.env.example
 # vercel
 .vercel
 
