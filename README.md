@@ -1,56 +1,136 @@
-# Học Liệu — Website tài liệu PDF
+# Học Liệu — Website chia sẻ tài liệu PDF (tiểu học)
 
-Ứng dụng Next.js 14 (App Router) lưu trữ và chia sẻ tài liệu học tập: danh sách, tìm kiếm, xem flipbook (`react-pdf` + `react-pageflip`), tải PDF khi đã đăng nhập, khu vực quản trị (Uploadthing, Prisma, PostgreSQL). Giao diện người dùng dùng **Material UI (MUI) v9** với **Emotion** (`@mui/material-nextjs` cho App Router), typography **Be Vietnam Pro** / **Lexend**; **Tailwind** còn trong `globals.css` nhưng các trang chính đã chuyển sang component MUI.
+Ứng dụng web để xem, tìm kiếm và quản lý tài liệu học tập dạng PDF: xem dạng lật trang, lọc theo danh mục / lớp / môn, tải file khi đã đăng nhập, và khu vực quản trị đầy đủ.
 
-## Yêu cầu
+---
 
-- Node 18+
-- PostgreSQL
-- Tài khoản [Uploadthing](https://uploadthing.com) (biến `UPLOADTHING_TOKEN`)
+## Công nghệ sử dụng
 
-## Cài đặt
+| Lớp | Công nghệ |
+|-----|-----------|
+| Framework | **Next.js 14** (App Router), **React 18**, **TypeScript** |
+| UI | **Material UI (MUI) v9**, Emotion (`@mui/material-nextjs`), **Tailwind CSS** (global utilities), font Be Vietnam Pro / Lexend |
+| Dữ liệu | **PostgreSQL**, **Prisma ORM** (`db push`, không kèm migration SQL trong repo) |
+| Xác thực | **NextAuth.js v4** (Credentials + bcrypt), JWT session |
+| File | **UploadThing** (PDF + ảnh bìa), **pdf-lib** (đếm trang), **react-pdf** + **pdfjs-dist**, **react-pageflip** |
+| Form / validation | **react-hook-form**, **Zod**, `@hookform/resolvers` |
+| Khác | **Sonner** (toast), **Recharts** (biểu đồ admin), **Swiper**, **Lucide** (một số icon), **Slugify** |
+
+---
+
+## Chức năng website
+
+### Người xem (không cần đăng nhập)
+
+- **Trang chủ**: danh mục, tài liệu mới, tài liệu xem nhiều, ô tìm kiếm nhanh.
+- **Danh sách tài liệu** (`/tai-lieu`): lọc theo danh mục, lớp, trạng thái xuất bản, phân trang.
+- **Danh mục** (`/danh-muc/[slug]`): tài liệu thuộc từng danh mục.
+- **Tìm kiếm** (`/tim-kiem`): tìm theo từ khóa (server-side).
+- **Chi tiết tài liệu** (`/tai-lieu/[slug]`): mô tả, metadata, xem PDF (flipbook / trình xem), ghi nhận lượt xem.
+
+### Người dùng đã đăng nhập
+
+- **Đăng ký / đăng nhập** (`/dang-ky`, `/dang-nhap`).
+- **Tải PDF**: chỉ khi có session hợp lệ; đếm lượt tải.
+
+### Quản trị viên (`role: ADMIN`)
+
+- **Dashboard** (`/admin`): thống kê tổng quan, biểu đồ lượt xem/tải theo ngày, tài liệu gần đây.
+- **Tài liệu** (`/admin/tai-lieu`): danh sách, lọc, ẩn/hiện xuất bản, sửa, xóa, thêm mới (upload PDF + ảnh bìa).
+- **Danh mục** (`/admin/danh-muc`): thêm / sửa tên / xóa (không xóa được nếu còn tài liệu gắn danh mục).
+
+Middleware bảo vệ toàn bộ `/admin/*`; API `/api/admin/*` kiểm tra session admin trên server.
+
+---
+
+## Chạy project trên máy
+
+### Yêu cầu
+
+- **Node.js 18+**
+- **PostgreSQL** (local hoặc cloud)
+- Tài khoản **[UploadThing](https://uploadthing.com)** (token upload file)
+
+### Biến môi trường
+
+Sao chép `.env.example` → `.env` và điền:
+
+| Biến | Ý nghĩa |
+|------|---------|
+| `DATABASE_URL` | Chuỗi kết nối PostgreSQL |
+| `NEXTAUTH_URL` | URL gốc app (local: `http://localhost:3000`) |
+| `NEXTAUTH_SECRET` | Chuỗi bí mật ký session (vd: `openssl rand -base64 32`) |
+| `UPLOADTHING_TOKEN` | Token từ dashboard UploadThing |
+
+### Lệnh
 
 ```bash
-cp .env.example .env
-# Điền DATABASE_URL, NEXTAUTH_SECRET, UPLOADTHING_TOKEN
-
 npm install
 npx prisma db push
 npm run db:seed
 npm run dev
 ```
 
-Mở [http://localhost:3000](http://localhost:3000). Tài khoản seed quản trị:
+Mở [http://localhost:3000](http://localhost:3000).
 
-- Email: `admin@hoclieu.vn`
-- Mật khẩu: `Admin@123456`
+**Tài khoản seed (sau `db:seed`):**
 
-## Scripts
+- Admin: `admin@hoclieu.vn` / `Admin@123456`
+- User demo: `hocsinh@hoclieu.vn` / `User@123456`
+
+### Scripts hữu ích
 
 | Lệnh | Mô tả |
 |------|--------|
-| `npm run dev` | Chạy dev server |
-| `npm run build` / `npm start` | Production |
+| `npm run dev` | Dev server |
+| `npm run dev:clean` | Xóa `.next` rồi chạy dev (khi cache lỗi) |
+| `npm run build` / `npm start` | Build production và chạy local |
+| `npm run lint` | ESLint |
 | `npm run db:push` | Đồng bộ schema Prisma → DB |
-| `npm run db:seed` | Dữ liệu mẫu + admin |
-| `npm run db:normalize-subjects` | Chuẩn hóa trường `subject` cũ → đúng `SUBJECT_OPTIONS` (chạy khi đổi danh sách môn) |
+| `npm run db:seed` | Seed dữ liệu mẫu + user |
+| `npm run db:normalize-subjects` | Chuẩn hóa cột `subject` cũ → đúng danh mục môn trong code |
 
-## Cấu trúc chính
+---
 
-- `src/app/(site)/` — Trang công khai (trang chủ, `/tai-lieu`, `/danh-muc`, `/tim-kiem`)
-- `src/app/(auth)/` — Đăng nhập / đăng ký
-- `src/app/admin/` — Dashboard, quản lý tài liệu & danh mục
-- `src/app/api/` — REST + NextAuth + Uploadthing
-- `prisma/schema.prisma` — User, Category, Document, AnalyticsDaily
+## Deploy lên Vercel
 
-## Lưu ý
+**Có thể deploy được.** Next.js 14 là stack phù hợp Vercel; cần lưu ý database và biến môi trường.
 
-- Giới hạn upload PDF trên Uploadthing hiện cấu hình **32MB** (giới hạn kiểu của SDK).
-- Trang chủ và API dùng Prisma: cần `DATABASE_URL` hợp lệ khi chạy.
-- Worker PDF dùng CDN `unpkg` cùng phiên bản `pdfjs-dist` với `react-pdf`.
+### Checklist
 
-## Triển khai
+1. **PostgreSQL ngoài Vercel** — Vercel không cung cấp Postgres mặc định. Dùng **Supabase**, **Neon**, **Railway**, **PlanetScale** (Postgres-compatible), v.v.
+2. **`DATABASE_URL` trên serverless** — Nên dùng URL **pooling / transaction mode** (vd: Supabase *pooler*, Neon *pool connection string*) để tránh hết connection khi cold start / nhiều function.
+3. **Biến trên Vercel** — Thêm giống `.env.example`: `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `UPLOADTHING_TOKEN`.
+4. **`NEXTAUTH_URL`** — Đặt đúng URL production (vd: `https://ten-du-an.vercel.app` hoặc domain tùy chỉnh). Sai URL thường gây lỗi đăng nhập / callback.
+5. **Database schema** — Sau khi gán `DATABASE_URL`, chạy một lần trên máy (hoặc CI):  
+   `npx prisma db push`  
+   hoặc dùng máy có quyền kết nối DB production. Seed tuỳ chọn: `npm run db:seed`.
+6. **Build** — `npm run build` chạy `postinstall` → `prisma generate`. Không cần cấu hình đặc biệt thêm nếu repo build được local.
 
-- Frontend: Vercel (đặt biến môi trường giống `.env.example`).
-- Database: Railway / Supabase Postgres.
-- Đảm bảo `NEXTAUTH_URL` trùng domain production.
+### UploadThing
+
+Giữ `UPLOADTHING_TOKEN` trên Vercel; kiểm tra domain app được phép trong dashboard UploadThing nếu có giới hạn origin.
+
+### Giới hạn đã biết
+
+- Upload PDF cấu hình **tối đa ~32MB** (theo router UploadThing trong code).
+- Worker PDF (`pdfjs`) dùng CDN cấu hình trong `next.config` — khi deploy cần domain ảnh/PDF remote nằm trong `images.remotePatterns` nếu thêm nguồn mới.
+
+---
+
+## Cấu trúc thư mục (rút gọn)
+
+| Đường dẫn | Nội dung |
+|-----------|----------|
+| `src/app/(site)/` | Trang công khai (trang chủ, tài liệu, danh mục, tìm kiếm) |
+| `src/app/(auth)/` | Đăng nhập / đăng ký |
+| `src/app/admin/` | Quản trị |
+| `src/app/api/` | Route handlers (REST, NextAuth, UploadThing, admin) |
+| `prisma/schema.prisma` | User, Category, Document, AnalyticsDaily |
+| `prisma/seed.ts` | Dữ liệu mẫu |
+
+---
+
+## License
+
+Private / theo thỏa thuận dự án.
